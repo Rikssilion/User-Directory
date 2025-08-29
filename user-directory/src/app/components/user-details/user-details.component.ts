@@ -20,6 +20,6 @@ export class UserDetailsComponent implements OnInit {
   ngOnInit(): void {
     const id = this.route.snapshot.paramMap.get('id')!;
     this.user = this.svc.getById(id);
-    if (!this.user) this.router.navigate(['/users']); // если перезагрузили страницу
+    if (!this.user) this.router.navigate(['/users']); 
   }
 }

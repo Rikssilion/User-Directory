@@ -37,19 +37,18 @@ export class UserListComponent implements OnInit, AfterViewInit {
   constructor(private svc: UserService, private router: Router) {}
 
   ngOnInit(): void {
-    // Первая загрузка из внешнего API
+    
     this.svc.load(50).subscribe({
       next: () => {},
       error: () => (this.loading = false)
     });
 
-    // Подписка на поток пользователей
     this.svc.users$.subscribe(list => {
       this.dataSource.data = list;
       this.loading = false;
     });
 
-    // 🔎 Поиск по имени/фамилии/email/компании
+
     this.dataSource.filterPredicate = (data, filter) => {
       const term = `${data.firstname} ${data.lastname} ${data.email} ${data.company}`.toLowerCase();
       return term.includes(filter);
