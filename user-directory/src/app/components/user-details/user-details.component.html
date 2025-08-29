@@ -1,0 +1,12 @@
+
+<mat-card *ngIf="user">
+  <mat-card-title>{{ user.firstname | lastFirst:user.lastname }}</mat-card-title>
+  <mat-card-content>
+    <p><strong>Email:</strong> {{ user.email }}</p>
+    <p><strong>Компания:</strong> {{ user.company }}</p>
+    <p><strong>VIP:</strong> {{ user.isVip ? 'Да' : 'Нет' }}</p>
+  </mat-card-content>
+  <div style="margin-top: 8px;">
+    <a mat-button routerLink="/users">Назад</a>
+  </div>
+</mat-card>
