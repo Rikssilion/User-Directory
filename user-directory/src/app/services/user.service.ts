@@ -1,42 +1,42 @@
-import { Component, OnInit } from '@angular/core';
-import { CommonModule } from '@angular/common';
-import { MatTableDataSource, MatTableModule } from '@angular/material/table';
-import { MatPaginatorModule } from '@angular/material/paginator';
-import { MatSortModule } from '@angular/material/sort';
-import { MatButtonModule } from '@angular/material/button';
-import { RouterModule } from '@angular/router';
-import { User } from '../../models/user.model';
-import { UserService } from '../../services/user.service';
+import { Injectable } from '@angular/core';
+import { HttpClient } from '@angular/common/http';
+import { BehaviorSubject, map, tap } from 'rxjs';
+import { User } from '../models/user.model';
 
-@Component({
-  selector: 'app-user-list',
-  standalone: true,
-  imports: [
-    CommonModule,
-    MatTableModule, MatPaginatorModule, MatSortModule, MatButtonModule, RouterModule
-  ],
-  templateUrl: './user-list.component.html',
-  styleUrl: './user-list.component.scss'
-})
-export class UserListComponent implements OnInit {
-  displayedColumns: string[] = ['firstname', 'lastname', 'email', 'company', 'isVip', 'actions'];
-  dataSource = new MatTableDataSource<User>();
+@Injectable({ providedIn: 'root' })
+export class UserService {
+  private usersSubject = new BehaviorSubject<User[]>([]);
+  users$ = this.usersSubject.asObservable();
 
-  constructor(private userService: UserService) {}
+  constructor(private http: HttpClient) {}
 
-  ngOnInit(): void {
-    this.userService.getAll().subscribe((users: User[]) => {
-      this.dataSource.data = users;
-    });
+  /** Подгрузить пользователей с fakerapi.it */
+  load(quantity = 40) {
+    const url = `https://fakerapi.it/api/v1/users?_quantity=${quantity}&_locale=en_US`;
+    return this.http.get<any>(url).pipe(
+      map(res => (res.data || []).map((u: any, i: number) => ({
+        id: cryptoRandomId(),
+        firstname: u.firstname || 'John',
+        lastname:  u.lastname  || 'Doe',
+        email:     u.email     || 'unknown@example.com',
+        company:   (u.company && (u.company.name || u.company)) || '—',
+        isVip: i % 7 === 0 // простое правило для демонстрации директивы
+      }) as User)),
+      tap(list => this.usersSubject.next(list))
+    );
   }
 
-  applyFilter(value: string) {
-    this.dataSource.filter = value.trim().toLowerCase();
+  add(newUser: Omit<User, 'id'>) {
+    const u: User = { ...newUser, id: cryptoRandomId(), isVip: !!newUser.isVip };
+    this.usersSubject.next([u, ...this.usersSubject.value]);
   }
 
-  deleteUser(id: number) {
-    this.userService.remove(id);
+  getById(id: string) {
+    return this.usersSubject.value.find(u => u.id === id) ?? null;
   }
 }
-export { UserService };
 
+/** Лёгкий генератор id */
+function cryptoRandomId() {
+  return Math.random().toString(36).slice(2, 10) + Date.now().toString(36).slice(-4);
+}
